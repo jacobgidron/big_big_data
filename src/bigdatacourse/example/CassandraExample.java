@@ -52,9 +52,9 @@ public class CassandraExample {
 	public static void test() {
 		// creating the session
 		CqlSession session = getCassandraSession(
-			"/Users/boim/Documents/astradb.zip",		// secure connect bundle path, change the path
-			"clientID",									// found in GeneratedToken.csv
-			"clientSecret",								// found in GeneratedToken.csv
+			"astradb/astradb.zip",		// secure connect bundle path, change the path
+			"ujfwiaynXOYYHYofxzfCbaHl",									// found in GeneratedToken.csv
+			"gZwoPs0U,C1Rr.qw,0J5lfiLRsXSfRJeYaPN7Iq.9DbNFrBW9HJH2v+UaO3FlY6ko7FT6AXl-23KrOhpOMLx-SplTeMumr2k8z3epL5yG,5CryrgPtI79lHudMQFA3sb",								// found in GeneratedToken.csv
 			"bigdatacourse");
 
 	
