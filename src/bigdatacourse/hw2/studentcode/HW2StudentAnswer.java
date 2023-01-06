@@ -3,7 +3,7 @@ package bigdatacourse.hw2.studentcode;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.TreeSet;
 import com.datastax.oss.driver.api.core.CqlSession;
 
 import bigdatacourse.hw2.HW2API;
@@ -89,7 +89,7 @@ public class HW2StudentAnswer implements HW2API{
 		System.out.println("asin: " 		+ "B005QB09TU");
 		System.out.println("title: " 		+ "Circa Action Method Notebook");
 		System.out.println("image: " 		+ "http://ecx.images-amazon.com/images/I/41ZxT4Opx3L._SY300_.jpg");
-		System.out.println("categories: " 	+ new HashSet<String>(Arrays.asList("Notebooks & Writing Pads", "Office & School Supplies", "Office Products", "Paper")));
+		System.out.println("categories: " 	+ new TreeSet<String>(Arrays.asList("Notebooks & Writing Pads", "Office & School Supplies", "Office Products", "Paper")));
 		System.out.println("description: " 	+ "Circa + Behance = Productivity. The minute-to-minute flexibility of Circa note-taking meets the organizational power of the Action Method by Behance. The result is enhanced productivity, so you'll formulate strategies and achieve objectives even more efficiently with this Circa notebook and project planner. Read Steve's blog on the Behance/Levenger partnership Customize with your logo. Corporate pricing available. Please call 800-357-9991.");;
 		
 		// required format - if the asin does not exists return this value
@@ -99,6 +99,7 @@ public class HW2StudentAnswer implements HW2API{
 	
 	@Override
 	public void userReviews(String reviewerID) {
+		// the order of the reviews should be by the time (desc), then by the asin
 		//TODO: implement this function
 		System.out.println("TODO: implement this function...");
 		
@@ -127,6 +128,7 @@ public class HW2StudentAnswer implements HW2API{
 
 	@Override
 	public void itemReviews(String asin) {
+		// the order of the reviews should be by the time (desc), then by the reviewerID
 		//TODO: implement this function
 		System.out.println("TODO: implement this function...");
 		
