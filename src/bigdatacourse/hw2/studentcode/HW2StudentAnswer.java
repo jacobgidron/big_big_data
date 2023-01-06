@@ -141,8 +141,24 @@ public class HW2StudentAnswer implements HW2API{
 
 	@Override
 	public void loadItems(String pathItemsFile) throws Exception {
-		//TODO: implement this function
-		System.out.println("TODO: implement this function...");
+		int maxThreads	= 32;
+		// creating the thread factors
+		ExecutorService executor = Executors.newFixedThreadPool(maxThreads);
+		while (bla_bla_jacob.hasnext() != null) {
+			JSONObject item = bla_bla_jacob.next();
+			executor.execute(new Runnable() {
+				@Override
+				public void run() {
+					BoundStatement bstmt = pstmtAddItem.bind()
+							.setLong(0, 1)
+							.setString(3, "1")
+							.setString(3, "1")
+							.setString(3, "1")
+							.setString(3, "1");
+					session.execute(bstmt);
+				}
+			});
+		}
 	}
 
 	@Override
