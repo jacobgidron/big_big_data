@@ -4,25 +4,87 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 
 import bigdatacourse.hw2.HW2API;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.Row;
+import org.json.JSONObject;
 
 public class HW2StudentAnswer implements HW2API{
 	
 	// general consts
 	public static final String		NOT_AVAILABLE_VALUE 	=		"na";
+	private static final String		TABLE_ITEMS				= 		"items";
+	private static final String		TABLE_ITEM_REVIEWS 		= 		"item_reviews";
+	private static final String		TABLE_USER_REVIEWS 		= 		"user_reviews";
 
 	// CQL stuff
-	//TODO: add here create table and query designs 
+	private static final String		CQL_CREATE_ITEMS_TABLE =
+			"CREATE TABLE " + TABLE_ITEMS 	+"(" 		+
+					"asin,"			+
+					"title,"				+
+					"image,"			+
+					"categories,"				+
+					"description,"				+
+					"PRIMARY KEY ((asin))"	+
+					") ";
+
+	private static final String		CQL_CREATE_ITEM_REVIEWS_TABLE =
+			"CREATE TABLE " + TABLE_ITEM_REVIEWS 	+"(" 		+
+					"time,"			+
+					"asin,"				+
+					"reviewerID,"			+
+					"reviewerName,"				+
+					"rating,"				+
+					"PRIMARY KEY ((asin), time, reviewerID)"	+
+					") "						+
+					"WITH CLUSTERING ORDER BY (time DESC, reviewerID DESC)";
+
+	private static final String		CQL_CREATE_USER_REVIEWS_TABLE =
+			"CREATE TABLE " + TABLE_USER_REVIEWS 	+"(" 		+
+					"time,"			+
+					"asin,"				+
+					"reviewerID,"			+
+					"reviewerName,"				+
+					"rating,"				+
+					"PRIMARY KEY ((user_id),time, asin)"	+
+					") "						+
+					"WITH CLUSTERING ORDER BY (time DESC, asin DESC)";
 	
 	// cassandra session
 	private CqlSession session;
-	
+
 	// prepared statements
-	//TODO: add here prepared statements variables
-	
-	
+	private static final String		CQL_ITEM_INSERT =
+			"INSERT INTO " + TABLE_ITEMS + "(asin, title, image, categories, description) VALUES(?, ?, ?, ?, ?)";
+
+	private static final String		CQL_ITEM_REVIEW_INSERT =
+			"INSERT INTO " + TABLE_ITEM_REVIEWS + "(time, asin, reviewerID, reviewerName, rating, summary, reviewText) VALUES(?, ?, ?, ?, ?, ?, ?)";
+
+	private static final String		CQL_USER_REVIEW_INSERT =
+			"INSERT INTO " + TABLE_USER_REVIEWS + "(time, asin, reviewerID, reviewerName, rating, summary, reviewText) VALUES(?, ?, ?, ?, ?, ?, ?)";
+
+	private static final String		CQL_ITEM_SELECT =
+			"SELECT * FROM " + TABLE_ITEMS + " WHERE asin = ?";
+
+	private static final String		CQL_ITEM_REVIEW_SELECT =
+			"SELECT * FROM " + TABLE_ITEM_REVIEWS + " WHERE asin = ?";
+
+	private static final String		CQL_USER_REVIEW_SELECT =
+			"SELECT * FROM " + TABLE_USER_REVIEWS + " WHERE reviewerID = ?";
+
+	PreparedStatement pstmtAddItem;
+	PreparedStatement pstmtAddItemReview;
+	PreparedStatement pstmtAddUserReview;
+	PreparedStatement pstmtSelectItem;
+	PreparedStatement pstmtSelectItemReview;
+	PreparedStatement pstmtSelectUserReview;
+
 	@Override
 	public void connect(String pathAstraDBBundleFile, String username, String password, String keyspace) {
 		if (session != null) {
@@ -58,14 +120,23 @@ public class HW2StudentAnswer implements HW2API{
 	
 	@Override
 	public void createTables() {
-		//TODO: implement this function
-		System.out.println("TODO: implement this function...");
+		session.execute(CQL_CREATE_ITEMS_TABLE);
+		session.execute(CQL_CREATE_ITEM_REVIEWS_TABLE);
+		session.execute(CQL_CREATE_USER_REVIEWS_TABLE);
+		System.out.println("created tables: " + TABLE_ITEMS + ", "
+											  + TABLE_ITEM_REVIEWS + ", "
+											  + TABLE_USER_REVIEWS);
 	}
 
 	@Override
 	public void initialize() {
-		//TODO: implement this function
-		System.out.println("TODO: implement this function...");
+		pstmtAddItem 			= 	session.prepare(CQL_ITEM_INSERT);
+		pstmtAddItemReview 		= 	session.prepare(CQL_ITEM_REVIEW_INSERT);
+		pstmtAddUserReview 		= 	session.prepare(CQL_USER_REVIEW_INSERT);
+		pstmtSelectItem 		= 	session.prepare(CQL_ITEM_SELECT);
+		pstmtSelectItemReview 	= 	session.prepare(CQL_ITEM_REVIEW_SELECT);
+		pstmtSelectUserReview 	= 	session.prepare(CQL_USER_REVIEW_SELECT);
+		System.out.println("Created prepare statements");
 	}
 
 	@Override
@@ -76,8 +147,24 @@ public class HW2StudentAnswer implements HW2API{
 
 	@Override
 	public void loadReviews(String pathReviewsFile) throws Exception {
-		//TODO: implement this function
-		System.out.println("TODO: implement this function...");
+		int maxThreads	= 32;
+		// creating the thread factors
+		ExecutorService executor = Executors.newFixedThreadPool(maxThreads);
+		while (bla_bla_jacob.hasnext() != null) {
+			JSONObject item = bla_bla_jacob.next();
+			executor.execute(new Runnable() {
+				@Override
+				public void run() {
+					BoundStatement bstmt = pstmtAddItem.bind()
+							.setLong(0, 1)
+							.setString(3, "1")
+							.setString(3, "1")
+							.setString(3, "1")
+							.setString(3, "1");
+					session.execute(bstmt);
+				}
+			});
+		}
 	}
 
 	@Override
@@ -90,7 +177,7 @@ public class HW2StudentAnswer implements HW2API{
 		System.out.println("title: " 		+ "Circa Action Method Notebook");
 		System.out.println("image: " 		+ "http://ecx.images-amazon.com/images/I/41ZxT4Opx3L._SY300_.jpg");
 		System.out.println("categories: " 	+ new TreeSet<String>(Arrays.asList("Notebooks & Writing Pads", "Office & School Supplies", "Office Products", "Paper")));
-		System.out.println("description: " 	+ "Circa + Behance = Productivity. The minute-to-minute flexibility of Circa note-taking meets the organizational power of the Action Method by Behance. The result is enhanced productivity, so you'll formulate strategies and achieve objectives even more efficiently with this Circa notebook and project planner. Read Steve's blog on the Behance/Levenger partnership Customize with your logo. Corporate pricing available. Please call 800-357-9991.");;
+		System.out.println("description: " 	+ "Circa + Behance = Productivity. The minute-to-minute flexibility of Circa note-taking meets the organizational power of the Action Method by Behance. The result is enhanced productivity, so you'll formulate strategies and achieve objectives even more efficiently with this Circa notebook and project planner. Read Steve's blog on the Behance/Levenger partnership Customize with your logo. Corporate pricing available. Please call 800-357-9991.");
 		
 		// required format - if the asin does not exists return this value
 		System.out.println("not exists");
