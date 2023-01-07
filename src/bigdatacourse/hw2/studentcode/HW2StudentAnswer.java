@@ -6,12 +6,10 @@ import java.io.FileReader;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 
@@ -20,6 +18,7 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class HW2StudentAnswer implements HW2API{
@@ -152,41 +151,50 @@ public class HW2StudentAnswer implements HW2API{
 
 	@Override
 	public void loadItems(String pathItemsFile) throws Exception {
-		int maxThreads	= 32;
+		int maxThreads	= 128;
 		// creating the thread factors
 		ExecutorService executor = Executors.newFixedThreadPool(maxThreads);
 		String line;
 		BufferedReader br = new BufferedReader( new FileReader(pathItemsFile));
 		List<String> string_debug = new ArrayList<String>();
 		List<JSONObject> json_debug = new ArrayList<JSONObject>();
-
 		while ((line = br.readLine()) != null) {
+			TreeSet<String> categories_set = new TreeSet<String>();
 			JSONObject item = new JSONObject(line);
-			json_debug.add(item);
+			for (Object categories : item.getJSONArray("categories")) {
+				JSONArray inner = (JSONArray) categories;
+				for (Object cat : inner) {
+					String s = (String) cat;
+					categories_set.add(s);
+				}
+			}
 			executor.execute(new Runnable() {
 				@Override
 				public void run() {
 					BoundStatement bstmt = pstmtAddItem.bind()
-							.setLong(0, 1)
-							.setString(3, "1")
-							.setString(3, "1")
-							.setString(3, "1")
-							.setString(3, "1");
+							.setString("asin", item.getString("asin"))
+							.setString("title", item.isNull("title")? NOT_AVAILABLE_VALUE: item.getString("title"))
+							.setString("image", item.isNull("imUrl")? NOT_AVAILABLE_VALUE: item.getString("imUrl"))
+							.setString("categories", categories_set.toString())
+							.setString("description", item.isNull("description")? NOT_AVAILABLE_VALUE: item.getString("description"));
 					session.execute(bstmt);
 				}
 			});
 		}
+			executor.shutdown();
+			executor.awaitTermination(1, TimeUnit.HOURS);
 	}
 
 	@Override
 	public void loadReviews(String pathReviewsFile) throws Exception {
-		int maxThreads	= 32;
+		int maxThreads	= 128;
 		// creating the thread factors
 		ExecutorService executor = Executors.newFixedThreadPool(maxThreads);
 		String line;
 		BufferedReader br = new BufferedReader( new FileReader(pathReviewsFile));
 		List<String> string_debug = new ArrayList<String>();
 		List<JSONObject> json_debug = new ArrayList<JSONObject>();
+		Set <String> set = new HashSet<>();
 
 		while ((line = br.readLine()) != null) {
 			JSONObject item = new JSONObject(line);
@@ -194,16 +202,36 @@ public class HW2StudentAnswer implements HW2API{
 			executor.execute(new Runnable() {
 				@Override
 				public void run() {
-					BoundStatement bstmt = pstmtAddItem.bind()
-							.setLong(0, 1)
-							.setString(3, "1")
-							.setString(3, "1")
-							.setString(3, "1")
-							.setString(3, "1");
-					session.execute(bstmt);
+					try {
+						BoundStatement item_bstmt = pstmtAddItemReview.bind()
+								.setString("asin", item.getString("asin"))
+								.setInstant("time", Instant.ofEpochSecond(item.getInt("unixReviewTime")))
+								.setString("reviewerID", item.getString("reviewerID"))
+								.setString("reviewerName", item.isNull("reviewerName") ? NOT_AVAILABLE_VALUE : item.getString("reviewerName"))
+								.setInt("rating", item.getInt("overall"))
+								.setString("summary", item.isNull("summary") ? NOT_AVAILABLE_VALUE : item.getString("summary"))
+								.setString("reviewText", item.isNull("reviewText") ? NOT_AVAILABLE_VALUE : item.getString("reviewText"));
+						session.execute(item_bstmt);
+						BoundStatement user_bstmt = pstmtAddUserReview.bind()
+								.setInstant("time", Instant.ofEpochSecond(item.getInt("unixReviewTime")))
+								.setString("asin", item.isNull("asin") ? NOT_AVAILABLE_VALUE : item.getString("asin"))
+								.setString("reviewerID", item.isNull("reviewerID") ? NOT_AVAILABLE_VALUE : item.getString("reviewerID"))
+								.setString("reviewerName", item.isNull("reviewerName") ? NOT_AVAILABLE_VALUE : item.getString("reviewerName"))
+								.setInt("rating", item.getInt("overall"))
+								.setString("summary", item.isNull("summary") ? NOT_AVAILABLE_VALUE : item.getString("summary"))
+								.setString("reviewText", item.isNull("reviewText") ? NOT_AVAILABLE_VALUE : item.getString("reviewText"));
+						session.executeAsync(user_bstmt);
+					}catch (Exception e){
+						System.out.println(e);
+					}
 				}
 			});
+
 		}
+		executor.shutdown();
+		executor.awaitTermination(1, TimeUnit.HOURS);
+//		System.out.println("sent "+json_debug.size()+ " items");
+//		System.out.println("set "+set.size()+ " items");
 	}
 
 	@Override
@@ -218,7 +246,7 @@ public class HW2StudentAnswer implements HW2API{
 		System.out.println("asin: " 		+ row.getString("asin"));
 		System.out.println("title: " 		+ row.getString("title"));
 		System.out.println("image: " 		+ row.getString("image"));
-		System.out.println("categories: " 	+ new TreeSet<String>(new ArrayList<String>()));
+		System.out.println("categories: "+    row.getString("categories"));
 		System.out.println("description: " 	+ row.getString("description"));
 		row = rs.one();
 		assert row == null: "Item select returned more than one row";
@@ -244,11 +272,11 @@ public class HW2StudentAnswer implements HW2API{
 		int count = 0;
 		while (row != null) {
 			System.out.println(
-					"time: " 			+ row.getInstant(0)		 			+
+					"time: " 			+ row.getInstant("time")		 	+
 					", asin: " 			+ row.getString("asin") 			+
 					", reviewerID: " 	+ row.getString("reviewerID") 	+
 					", reviewerName: " 	+ row.getString("reviewerName")	+
-					", rating: " 		+ row.getString("rating") 		+
+					", rating: " 		+ row.getInt("rating") 		+
 					", summary: " 		+ row.getString("summary")		+
 					", reviewText: " 	+ row.getString("reviewText")		);
 
@@ -278,21 +306,20 @@ public class HW2StudentAnswer implements HW2API{
 //
 //		System.out.println("total reviews: " + 2);
 	}
-
 	@Override
 	public void itemReviews(String asin) {
 		// the order of the reviews should be by the time (desc), then by the reviewerID
-		BoundStatement bstmt = pstmtSelectUserReview.bind().setString(0, asin);
+		BoundStatement bstmt = pstmtSelectItemReview.bind().setString(0, asin);
 		ResultSet rs = session.execute(bstmt);
 		Row row = rs.one();
 		int count = 0;
 		while (row != null) {
 			System.out.println(
-					"time: " 			+ row.getInstant(0)		 			+
+					"time: " 			+ row.getInstant("time")			+
 					", asin: " 			+ row.getString("asin") 			+
 					", reviewerID: " 	+ row.getString("reviewerID") 	+
 					", reviewerName: " 	+ row.getString("reviewerName")	+
-					", rating: " 		+ row.getString("rating") 		+
+					", rating: " 		+ row.getInt("rating") 			+
 					", summary: " 		+ row.getString("summary")		+
 					", reviewText: " 	+ row.getString("reviewText")		);
 
