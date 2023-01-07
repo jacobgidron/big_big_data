@@ -1,8 +1,14 @@
 package bigdatacourse.hw2.studentcode;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.InputStream;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -144,8 +150,14 @@ public class HW2StudentAnswer implements HW2API{
 		int maxThreads	= 32;
 		// creating the thread factors
 		ExecutorService executor = Executors.newFixedThreadPool(maxThreads);
-		while (bla_bla_jacob.hasnext() != null) {
-			JSONObject item = bla_bla_jacob.next();
+		String line;
+		BufferedReader br = new BufferedReader( new FileReader(pathItemsFile));
+		List<String> string_debug = new ArrayList<String>();
+		List<JSONObject> json_debug = new ArrayList<JSONObject>();
+
+		while ((line = br.readLine()) != null) {
+			JSONObject item = new JSONObject(line);
+			json_debug.add(item);
 			executor.execute(new Runnable() {
 				@Override
 				public void run() {
@@ -166,8 +178,14 @@ public class HW2StudentAnswer implements HW2API{
 		int maxThreads	= 32;
 		// creating the thread factors
 		ExecutorService executor = Executors.newFixedThreadPool(maxThreads);
-		while (bla_bla_jacob.hasnext() != null) {
-			JSONObject item = bla_bla_jacob.next();
+		String line;
+		BufferedReader br = new BufferedReader( new FileReader(pathReviewsFile));
+		List<String> string_debug = new ArrayList<String>();
+		List<JSONObject> json_debug = new ArrayList<JSONObject>();
+
+		while ((line = br.readLine()) != null) {
+			JSONObject item = new JSONObject(line);
+			json_debug.add(item);
 			executor.execute(new Runnable() {
 				@Override
 				public void run() {
