@@ -32,37 +32,37 @@ public class HW2StudentAnswer implements HW2API{
 	// CQL stuff
 	private static final String		CQL_CREATE_ITEMS_TABLE =
 			"CREATE TABLE " + TABLE_ITEMS 	+"(" 	+
-					"asin,"							+
-					"title,"						+
-					"image,"						+
-					"categories,"					+
-					"description,"					+
+					"asin			TEXT,"			+
+					"title			TEXT,"			+
+					"image			TEXT,"			+
+					"categories		TEXT,"			+
+					"description	TEXT,"			+
 					"PRIMARY KEY ((asin))"			+
 					") ";
 
 	private static final String		CQL_CREATE_ITEM_REVIEWS_TABLE =
 			"CREATE TABLE " + TABLE_ITEM_REVIEWS 	+"(" 					+
-					"time,"													+
-					"asin,"													+
-					"reviewerID,"											+
-					"reviewerName,"											+
-					"rating,"												+
-					"summary,"												+
-					"reviewText,"											+
+					"time				TIMESTAMP,"							+
+					"asin				TEXT,"								+
+					"reviewerID			TEXT,"								+
+					"reviewerName		TEXT,"								+
+					"rating				INT,"								+
+					"summary			TEXT,"								+
+					"reviewText			TEXT,"								+
 					"PRIMARY KEY ((asin), time, reviewerID)"				+
 					") "													+
 					"WITH CLUSTERING ORDER BY (time DESC, reviewerID DESC)";
 
 	private static final String		CQL_CREATE_USER_REVIEWS_TABLE =
 			"CREATE TABLE " + TABLE_USER_REVIEWS 	+"(" 		            +
-					"time,"			                                   		+
-					"asin,"				                                   	+
-					"reviewerID,"			                                +
-					"reviewerName,"				                            +
-					"rating,"				                                +
-					"summary,"				                                +
-					"reviewText,"				                            +
-					"PRIMARY KEY ((user_id),time, asin)"	                +
+					"time				TIMESTAMP,"							+
+					"asin				TEXT,"								+
+					"reviewerID			TEXT,"								+
+					"reviewerName		TEXT,"								+
+					"rating				INT,"								+
+					"summary			TEXT,"								+
+					"reviewText			TEXT,"								+
+					"PRIMARY KEY ((reviewerID),time, asin)"	                +
 					") "						                            +
 					"WITH CLUSTERING ORDER BY (time DESC, asin DESC)";
 	
